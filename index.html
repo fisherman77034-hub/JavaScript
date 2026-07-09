@@ -1,0 +1,101 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鼠标控制人物头部转向</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  body {
+    cursor: url('img-small.png') 0 0, auto;
+  }
+
+  .video-wrapper {
+    width: 100vw;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .video-wrapper video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<div class="video-wrapper">
+  <video
+    id="heroVideo"
+    muted
+    playsinline
+    preload="auto"
+    src="固定镜头，保持画面构图完全不变。光影和人物所在位置全部保持不.mp4"
+  ></video>
+</div>
+
+<script>
+(function () {
+  const video = document.getElementById('heroVideo');
+
+  let targetTime = 0;
+  let pending = false;
+  let videoDuration = 0;
+
+  function onReady() {
+    video.currentTime = 0;
+    targetTime = 0;
+    videoDuration = video.duration;
+  }
+
+  if (video.readyState >= 1) {
+    onReady();
+  } else {
+    video.addEventListener('loadeddata', onReady);
+    video.addEventListener('loadedmetadata', function () {
+      if (video.readyState >= 1) onReady();
+    });
+  }
+
+  document.addEventListener('mousemove', function (e) {
+    if (!isFinite(videoDuration) || videoDuration <= 0) return;
+
+    const ratio = 1 - e.clientX / window.innerWidth;
+    targetTime = ratio * videoDuration;
+
+    if (targetTime < 0) targetTime = 0;
+    if (targetTime > videoDuration) targetTime = videoDuration;
+
+    if (!pending) {
+      pending = true;
+      video.currentTime = targetTime;
+    }
+  });
+
+  video.addEventListener('seeked', function () {
+    pending = false;
+    const diff = Math.abs(video.currentTime - targetTime);
+    if (diff > 0.01) {
+      pending = true;
+      video.currentTime = targetTime;
+    }
+  });
+})();
+</script>
+</body>
+</html>
